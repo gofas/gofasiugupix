@@ -1,10 +1,15 @@
 <?php
 /**
- * Módulo GalaxPay Pix para WHMCS
- * @copyright	2022 Gofas Software
- * @see			https://gofas.net/?p=14685
+ * Módulo iugu Pix para WHMCS
+ * @copyright	2023 Gofas Software
+ * @see			https://gofas.net/?p=14950
  * @license		https://gofas.net/?p=9340
- * @support		https://gofas.net/?p=14690
- * @version		0.1.0
+ * @support		https://gofas.net/?p=14299
+ * @version		1.0.0
  */
-require __DIR__.'/gofasgalaxpaypix/index.php';
+if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)>=(int)81){
+	require_once __DIR__.'/gofasiugupix/index.php';
+}
+if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)<=(int)74){
+    require_once __DIR__.'/gofasiugupix/indexd.php';
+}

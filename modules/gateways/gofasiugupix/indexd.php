@@ -29,6 +29,7 @@ if(!function_exists('gip_api_connect')){
 		if($params['sandbox']){
 			$params_api = [
 				'api_mode' => 'sandbox',
+				//'account_id' => $params['account_id'],
 				'api_token' => $params['sandbox_api_token'],
 				'charge_url' => 'https://api.iugu.com/v1',
 			];
@@ -36,6 +37,7 @@ if(!function_exists('gip_api_connect')){
 		if(!$params['sandbox']){
 			$params_api = [
 				'api_mode' => 'live',
+				//'account_id' => $params['account_id'],
 				'api_token' => $params['api_token'],
 				'charge_url' => 'https://api.iugu.com/v1',
 			];
@@ -46,10 +48,8 @@ if(!function_exists('gip_api_connect')){
 if(!function_exists('gip_enable_pix') ){
 	function gip_enable_pix(){
 		$params = getGatewayVariables('gofasiugupix');
-		if(!$params['api_token']){
-			return;
-		}
 		$params_api = gip_api_connect();
+		
 		foreach( Capsule::table('tblconfiguration')->where('setting','=','gip_pix_enabled')->get(['value','created_at','updated_at']) as $pix_enabled_ ){
 			$pix_enabled	= $pix_enabled_->value;
 			$created_at		= $pix_enabled_->created_at;
@@ -79,7 +79,6 @@ if(!function_exists('gip_enable_pix') ){
 			$result = json_decode(curl_exec($curl),true);
 			$result_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 			curl_close($curl);
-			if(is_array($result)){
 			if((int)$result_code === (int)200 || ((int)$result_code !== (int)200 and $result['errors']['base']['0'] and $result['errors']['base']['0'] === 'Conta já possui Pix ativo')){
 				if(!$pix_enabled){
 					try { Capsule::table('tblconfiguration')->insert(array(
@@ -108,7 +107,6 @@ if(!function_exists('gip_enable_pix') ){
 			}
 			else{
 				logActivity('Gofas iugu - Pix | Erro ao ativar pagamento via PIX na conta iugu: '.$result_code.': '.$result,0);
-			}
 			}
 		}
 		if($error){
@@ -495,7 +493,10 @@ if(!function_exists('gip_decrypt')){
 }
 if(!function_exists('gip_get_version') ){
 	function gip_get_version($page_id,$referer,$module_version){
+		//$currentUser = new \WHMCS\Authentication\CurrentUser;
 		$current_admin = gip_current_admin();
+		//$admin_ = json_decode(json_encode($currentUser->admin()),true);
+		//$admin = ['email'=>$admin_['email'],'firstname'=>$admin_['firstname'],'lastname'=>$admin_['lastname']];
 		$query = '?software_id='.$page_id.'&install_url='.$referer.'&current_version='.$module_version.'&installer_email='.$current_admin['email'].'&installer_firstname='.$current_admin['firstname'].'&installer_lastname='.$current_admin['lastname'].'&action=verify'.gip_sysinfo();
 		$curl = curl_init();
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
@@ -505,6 +506,7 @@ if(!function_exists('gip_get_version') ){
 		$available_version_ = curl_exec($curl);
 		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
+		//logModuleCall('gofasiugupix','gip_get_version',array('available_version'=>$available_version_),'','' );
 		return ['version'=>$available_version_,'http_code'=>$http_status];
 	}
 }
@@ -571,7 +573,9 @@ if(!function_exists('gip_verify_module_updates')){
 			$embed			= $version['check'];
 			$created_at		= $version_->created_at;
 			$updated_at		= $version_->updated_at;
+			//$available_version	= (int)preg_replace("/[^0-9]/","",$version['last_version']);
 		}
+		///// Get
 		if(!$version){
 			$get_version = gip_get_version($page_id,$referer,$module_version);
 			$get_embed	 = gip_get_embed($page_id,$referer,$module_version);
@@ -606,6 +610,7 @@ if(!function_exists('gip_verify_module_updates')){
 		if($version and strtotime($updated_at) > strtotime("-1 day")){
 			$available_version = $last_version;
 		}
+		// insert
 		if(!$version and $get_version['version'] and $get_embed['embed']){
 			$local_version = $module_version;
 			$last_version = $get_version['version'];
@@ -629,6 +634,7 @@ if(!function_exists('gip_verify_module_updates')){
 				$error .= $e->getMessage();
 			}
 		}
+		// update
 		if($version and $get_version['version'] and $get_embed['embed'] and strtotime($updated_at) < strtotime("-1 day") and (
 			$available_version !== $module_version ||
 			$local_version !== $module_version ||
@@ -771,7 +777,7 @@ if(!function_exists('gip_datediff')){
 		if( $invoice_duedate === date('Y-m-d') ){
 			$billet_duedate = date('Y-m-d', strtotime($diasParaVencimento));
 		}
-		// Se fatura já venceu, data de vencimento do qrcode = Hoje + X dia(s)
+		// Se fatura já venceu, data de vencimento do boleto = Hoje + X dia(s)
 		if( $invoice_duedate < date('Y-m-d') ){
 			$billet_duedate = date('Y-m-d', strtotime( $diasParaVencimento ));
 		}
@@ -817,22 +823,22 @@ if(!function_exists('gip_qrcode_mergetags')){
 			$invoice			= localAPI( 'GetInvoice', array('invoiceid' => $vars['relid']), (int)gip_setup_admin()['id']);
 			if( $invoice['total'] > '0.00' and $invoice['paymentmethod'] === 'gofasiugupix'){
 				// Saved Billets
-				$qrcode_saved = array();
+				$boleto_saved = array();
 				foreach( Capsule::table('gofasiugupix')->where('invoice_id','=',$vars['relid'])->get(['qrcode','qrcode_text']) as $key => $value ){
-					$qrcodes_for_invoice[$key]=json_decode(json_encode($value), true);
+					$boletos_for_invoice[$key]=json_decode(json_encode($value), true);
 				}
-				$qrcode_saved = $qrcodes_for_invoice['0']; // Array
+				$boleto_saved = $boletos_for_invoice['0']; // Array
 				// Merge Fields
 				if (!array_key_exists('gip_qrcode', $vars['mergefields'])) {
-					$gip_merge_fields['gip_qrcode'] = $qrcode_saved['qrcode'];
+					$gip_merge_fields['gip_qrcode'] = $boleto_saved['qrcode'];
 				}
 				if (!array_key_exists('gip_qrcode_text', $vars['mergefields'])) {
-					$gip_merge_fields['gip_qrcode_text'] = $qrcode_saved['qrcode_text'];
+					$gip_merge_fields['gip_qrcode_text'] = $boleto_saved['qrcode_text'];
 				}
 			}
     	}
 		if($params['log']){
-			logModuleCall('gofasiugupix','email_qrcode',$vars,'',$invoice);
+			logModuleCall('gofasiugupix','email_boleto',$vars,'',$invoice);
 		}
 		return $gip_merge_fields;
     }
@@ -992,7 +998,7 @@ function gip_check_status_updates($vars){
     if(is_array($check_schedule)){
 	    try {
 	    	$log = array();
-	    	$qrcode = array();
+	    	$boleto = array();
 	    	$invoices = array();
 	    	// Unpaid invoices IDs
 	    	foreach( Capsule::table('tblinvoices')
@@ -1001,21 +1007,21 @@ function gip_check_status_updates($vars){
                 ->orderBy('id','asc')
                 ->whereIn('id',$check_schedule)
                 ->get(['id','total','userid']) as $tblinvoices){
-	    		foreach( Capsule::table('gofasiugupix')->where('invoice_id','=',$tblinvoices->id )->get(['charge_id']) as $local_qrcode){
-	    			$qrcode = gip_charge_verify($local_qrcode->charge_id);
-	    			$qrcodes[$local_qrcode->charge_id] = $qrcode;
-	    			if((int)$qrcode['result_code'] !== 200){
-	    				$error	.= 'Erro ao verificar Pix: ' . json_encode($qrcode);
+	    		foreach( Capsule::table('gofasiugupix')->where('invoice_id','=',$tblinvoices->id )->get(['charge_id']) as $local_boleto){
+	    			$boleto = gip_charge_verify($local_boleto->charge_id);
+	    			$boletos[$local_boleto->charge_id] = $boleto;
+	    			if((int)$boleto['result_code'] !== 200){
+	    				$error	.= 'Erro ao verificar Pix: ' . json_encode($boleto);
 	    			}
-	    			if($qrcode['result']['status'] === 'paid') {
+	    			if($boleto['result']['status'] === 'paid') {
 	    				$invoices[$tblinvoices->id] = [
 	    					'invoice_id'=>$tblinvoices->id,
-	    					'trans_id'=>$local_qrcode->charge_id,
-	    					'transaction_id'=>$local_qrcode->charge_id,
+	    					'trans_id'=>$local_boleto->charge_id,
+	    					'transaction_id'=>$local_boleto->charge_id,
 	    					'total'=>$tblinvoices->total,
 	    					'user_id'=>$tblinvoices->userid,
-	    					'paid_amount'=>(float)number_format(($qrcode['result']['total_paid_cents']/100), 2,'.',''),
-	    					'fee'=>(float)number_format(($qrcode['result']['taxes_paid_cents']/100), 2,'.','')
+	    					'paid_amount'=>(float)number_format(($boleto['result']['total_paid_cents']/100), 2,'.',''),
+	    					'fee'=>(float)number_format(($boleto['result']['taxes_paid_cents']/100), 2,'.','')
 	    				];
 	    			}
 	    		} // End Foreach
@@ -1040,35 +1046,71 @@ function gip_check_status_updates($vars){
 	    	}
 	    }
 	    catch (Exception $e) {
-	    	$error	.= 'Erro ao listar qrcodes pagos: ' . $e->getMessage();
+	    	$error	.= 'Erro ao listar boletos pagos: ' . $e->getMessage();
 	    	$log['error'] = $error;
 	    }
     }
-	$log['qrcodes'] = $qrcodes;
+	$log['boletos'] = $boletos;
 	$log['invoices'] = $invoices;
 	$log['update_invoice'] = $update_invoice;
 	$log['add_trans'] = $add_trans;
 	if($params['log']){
 		logModuleCall('gofasiugupix','AfterCronJob',array('module_version'=>gip_version(),'params'=>$params),'', array($log) );
+		//echo '<pre>',print_r($log),'</pre>';
 	}
 	return;
 }}
+
+if($_REQUEST['invoice_id']){
+	require_once __DIR__ . '/../../../init.php';
+	require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
+	require_once __DIR__ . '/../../../includes/invoicefunctions.php';
+	$params = getGatewayVariables('gofasiugupix');
+	$params_api = gip_api_connect();
+	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gip_setup_admin()['id']);
+	if( $invoice['invoiceid']){
+		$qrcode = gip_get_local_qrc($_REQUEST['invoice_id']);	
+		$charge = gip_charge_verify($qrcode['charge_id']);
+		if(($charge['result']['status'] === 'paid') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)($charge['result']['total_cents']/100)){
+			$add_trans = gip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)number_format( $charge['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format($charge['result']['taxes_paid_cents']/100,  2, '.', ''), 'gip-'.$params_api['api_mode'].'-'.$qrcode['charge_id'], 'Pix pago - confirmação ao acessar a fatura');			
+		}
+		if($charge['result']['status']){
+			echo $charge['result']['status'];
+		}
+	}
+	if($params['log']){
+		logModuleCall('gofasiugupix','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
+	}
+}
+
+add_hook("AfterCronJob",1,"gip_check_status_updates");
+add_hook("EmailPreSend",1,"gip_qrcode_mergetags");
+add_hook("EmailTplMergeFields",1,"gip_qrcode_mergetags_fields");
+
+
 
 /**
  * 
  * Start Gateway Functions
  */
+if(!function_exists('gofasiugupix_MetaData')){
+    function gofasiugupix_MetaData(){
+        return array(
+            'DisplayName' => 'Gofas iugu - Pix',
+            'APIVersion' => '1.1',
+        );
+    }
+}
 if(!function_exists('gofasiugupix_config')){
     function gofasiugupix_config(){
-		$gip_config = [];
-    	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
+    	if(stripos($_SERVER['REQUEST_URI'], '/configgateways.php')!==false){
     		$module_version	= '1.0.0';
     		$module_page	= '14950';
             $verify_install = gip_verify_install();
 			$enable_pix = gip_enable_pix();
     		$whmcs_url = gip_whmcs_url();
     		$check_updates = gip_verify_module_updates($module_page,$whmcs_url['admin_url'],$module_version);
-    		if($_REQUEST['resetversion'] === 'gofasiugupix'){
+    		if($_REQUEST['resetversion'] === 'gofasiugupix'){ #9
                 gip_reset_local_version();
                 header_remove();
     			header("Location: ".$whmcs_url['admin_url'].'/configgateways.php?manage=gofasiugupix#m_gofasiugupix',true,303);
@@ -1176,7 +1218,7 @@ if(!function_exists('gofasiugupix_config')){
             	    'Type'              => 'text',
     				'Size'				=> '10',
     				'Default' 			=> '2',
-            	    'Description'       => 'Dias entre a data de emissão e a data do vencimento do qrcode quando gerado no dia do vencimento ou após o vencimento da fatura. Pix gerado antes do vencimento da fatura é emitido com a mesma data de vencimento da fatura. Mínimo 1 máximo 30.',
+            	    'Description'       => 'Dias entre a data de emissão e a data do vencimento do boleto quando gerado no dia do vencimento ou após o vencimento da fatura. Pix gerado antes do vencimento da fatura é emitido com a mesma data de vencimento da fatura. Mínimo 1 máximo 30.',
             	),
     			// Top billet button message 
     			'message' => array(
@@ -1186,6 +1228,14 @@ if(!function_exists('gofasiugupix_config')){
     				'Default' => 'QR Code gerado com sucesso.<br>Escaneie ou copie e cole o QR code.<br>',
     				'Description' => 'Texto exibido na fatura acima do botão "Vizualizar Pix"',
     			),
+    			// Redirecionar para o link do boleto
+    			/*
+				'redirecttobillet' => array(
+    				'FriendlyName' => $opt_num++.'- Redirecionar para o Pix',
+    				'Type' => 'yesno',
+    				'Description' => 'Redireciona o cliente diretamente para o URL do boleto ao acessar a fatura.',
+    			),
+				*/
     			'separator_3' => array(
     				'Description' => '<b>Confirmação automática de pagamentos</b> - <a href="https://gofas.net/gip/#autoverifypayments" target="_blank" style="text-decoration: underline;">Entenda como funciona</a> &#10138;
                     <br>'.gip_file_exists_check('/includes/hooks/gofasiugupix.php',NULL,$error_msg='<span style="color: red;border-left: 2px solid red;padding-left: 5px;">Atenção! Hook não instalado. Para esse recurso funcionar você deve <b>instalar o hook que acompanha o módulo</b> - <a style="text-decoration:underline;color:red" target="_blank" href="https://gofas.net/gip/#instalation">Saiba mais </a>&#10138;.</span>').'
@@ -1218,23 +1268,23 @@ if(!function_exists('gofasiugupix_config')){
     				</div>',
     			),
     		);
-			if(file_exists(__DIR__.'/custom/config.php')){
-				include __DIR__.'/custom/config.php';
-				if(is_array($gip_custom_config) and is_array($renderize) and is_array($footer)){
-					$separator_custom = ['separator_custom' => [
-						'Description' => '
-							<div class="gip_separator">
-								<h4>Configurações personalizadas</h4>
-							</div>',
-						],
-					];
-					$gip_config = array_merge($renderize,$separator_custom,$gip_custom_config,$footer);
-				}
+    	}
+		if(file_exists(__DIR__.'/custom/config.php')){
+			include __DIR__.'/custom/config.php';
+			if(is_array($gip_custom_config) and is_array($renderize) and is_array($footer)){
+				$separator_custom = ['separator_custom' => [
+					'Description' => '
+						<div class="gip_separator">
+							<h4>Configurações personalizadas</h4>
+						</div>',
+					],
+				];
+				$gip_config = array_merge($renderize,$separator_custom,$gip_custom_config,$footer);
 			}
-    		if(!file_exists(__DIR__.'/custom/config.php') || !$gip_custom_config and (is_array($renderize) and is_array($footer))){
-    			$gip_config = array_merge($renderize,$footer);
-    		}
 		}
+    	if(!file_exists(__DIR__.'/custom/config.php') || !$gip_custom_config and (is_array($renderize) and is_array($footer))){
+    		$gip_config = array_merge($renderize,$footer);
+    	}
     	return $gip_config;
     }
 }
@@ -1268,34 +1318,34 @@ if(!function_exists('gofasiugupix_link')){
 				}
     			$customer = gip_customer($params['clientdetails']['id']);
     			$log['customer'] = $customer;
-    			$saved_qrcode = gip_get_local_qrc($params['invoiceid']);
-    			$saved_qrcode_amount = (int)$saved_qrcode['amount']; // 4898
+    			$saved_boleto = gip_get_local_qrc($params['invoiceid']);
+    			$saved_boleto_amount = (int)$saved_boleto['amount']; // 4898
     			$invoice_int_amount = (int)preg_replace("/[^0-9]/", "", $params['amount']); // 4898
-    			$saved_qrcode_float_amount = (float)number_format(($saved_qrcode['amount']/100), 2,'.',''); // 48.98
-    			$log['saved_qrcode_amount'] = $saved_qrcode_amount;
+    			$saved_boleto_float_amount = (float)number_format(($saved_boleto['amount']/100), 2,'.',''); // 48.98
+    			$log['saved_boleto_amount'] = $saved_boleto_amount;
     			$log['invoice_int_amount'] = $invoice_int_amount;
-    			$log['saved_qrcode_float_amount'] = $saved_qrcode_float_amount;
-    			$log['saved_qrcode'] = $saved_qrcode;
+    			$log['saved_boleto_float_amount'] = $saved_boleto_float_amount;
+    			$log['saved_boleto'] = $saved_boleto;
     			$GetInvoiceResults			= localAPI('getinvoice',array('invoiceid'=>$params['invoiceid'] ), (int)gip_setup_admin()['id'] );
     			$datediff = gip_datediff($GetInvoiceResults['duedate'],$params['diasparavencimento']);
     			$log['datediff'] = $datediff;
     			$now_int = (int)date('Ymd');
-    			$billet_duedate_int = (int)preg_replace("/[^0-9]/", "", $saved_qrcode['duedate']);
-    			if($saved_qrcode['qrcode'] and $saved_qrcode_amount === $invoice_int_amount and $billet_duedate_int >= $now_int ){
-    				$charge_verify = gip_charge_verify($saved_qrcode['charge_id']);
+    			$billet_duedate_int = (int)preg_replace("/[^0-9]/", "", $saved_boleto['duedate']);
+    			if($saved_boleto['qrcode'] and $saved_boleto_amount === $invoice_int_amount and $billet_duedate_int >= $now_int ){
+    				$charge_verify = gip_charge_verify($saved_boleto['charge_id']);
     				$log['charge_verify'] = $charge_verify;
     				if((string)$charge_verify['result']['status'] === (string)'paid'){
-    					$add_trans = gip_add_trans($params['clientdetails']['id'], $params['invoiceid'], (float)number_format( $charge_verify['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format( $charge_verify['result']['taxes_paid_cents']/100,  2, '.', ''), 'gip-'.$saved_qrcode['charge_id'].'-'.$params_api['api_mode'], 'Pix pago - confirmação ao acessar a fatura');
+    					$add_trans = gip_add_trans($params['clientdetails']['id'], $params['invoiceid'], (float)number_format( $charge_verify['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format( $charge_verify['result']['taxes_paid_cents']/100,  2, '.', ''), 'gip-'.$saved_boleto['charge_id'].'-'.$params_api['api_mode'], 'Pix pago - confirmação ao acessar a fatura');
     					header_remove();
     					header("Location: ".gip_whmcs_url('whmcs_url').'/viewinvoice.php?id='.$params['invoiceid'],true,303);
     					exit;
     				}
     				$result .= $params['message'];
-					$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$saved_qrcode['qrcode'].'">';
-    				//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$saved_qrcode['qrcode'].'">Visualizar o Pix</a>';
-    				$result .= '<input value="'.$saved_qrcode['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+					$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$saved_boleto['qrcode'].'">';
+    				//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$saved_boleto['qrcode'].'">Visualizar o Pix</a>';
+    				$result .= '<input value="'.$saved_boleto['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
     				$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
-    				$log['saved_qrcode'] = $saved_qrcode;
+    				$log['saved_boleto'] = $saved_boleto;
     				if($error){
     					$result = '<b style="color:red;">Erro: '.$error.'</b>';
     				}
@@ -1307,14 +1357,14 @@ if(!function_exists('gofasiugupix_link')){
     				}
     				if(!$error and $params['redirecttobillet'] and stripos($_SERVER['REQUEST_URI'], 'viewinvoice') ){
     					header_remove();
-    					header("Location: ".$saved_qrcode['qrcode'],true,303);
+    					header("Location: ".$saved_boleto['qrcode'],true,303);
     					exit;
     				}
     				else {
     					return $result;
     				}
     			}
-    			if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_text'] || $saved_qrcode_amount !== $invoice_int_amount || $billet_duedate_int < $now_int){
+    			if(!$saved_boleto['qrcode'] || !$saved_boleto['qrcode_text'] || $saved_boleto_amount !== $invoice_int_amount || $billet_duedate_int < $now_int){
     				$line_items = array();
     				foreach( $GetInvoiceResults['items']['item'] as $Value){
     					if($Value['amount'] < (float)'0.00'){
@@ -1332,6 +1382,32 @@ if(!function_exists('gofasiugupix_link')){
     						];
 						}
     				}
+    				/*
+					$postfields = [
+    					'charge'=> [
+    						'order_id'=> $params['invoiceid'].time(),
+    						'method'=>'pix',
+    						'restrict_payment_method'=>true,
+    						'email'=>$customer['email'],
+    						//'bank_slip_extra_days'=>(int)$datediff['datediff'],
+    						'items'=>$line_items,
+    						'payer' => [
+    							'name'=> $customer['name'],
+    							'cpf_cnpj'=> $customer['document'],
+    							'email'=>$customer['email'],
+    							'address'=> [
+    								'zip_code'=> $customer['postcode'],
+    								'street'=> $customer['address'],
+    								'number'=> $customer['number'],
+    								'complement'=> $customer['complement'],
+    								'district'=> $customer['neighborhood'],
+    								'city'=> $customer['city'],
+    								'state'=> $customer['state']
+    							],
+    						],
+    					],
+    				];
+					*/
 					$postfields = [
     					'email'=>$customer['email'],
 						'due_date'=> $datediff['duedate'],
@@ -1354,27 +1430,27 @@ if(!function_exists('gofasiugupix_link')){
 							],
 						],
     				];
-    				$qrcode_ = gip_charge($postfields);
-    				if((int)$qrcode_['result_code'] !== (int)200){
-    					//$error .= $qrcode_['result_code'].': ';
-    					if(is_array($qrcode_['result']['errors'])){
-							foreach($qrcode_['result']['errors'] as $key=>$value){
+    				$boleto_ = gip_charge($postfields);
+    				if((int)$boleto_['result_code'] !== (int)200){
+    					//$error .= $boleto_['result_code'].': ';
+    					if(is_array($boleto_['result']['errors'])){
+							foreach($boleto_['result']['errors'] as $key=>$value){
     							$error .= $key.' '.implode(", ",$value);
     						}
 						}
     				}
     				$log['postfields_json'] = json_encode($postfields['charge']);
-    				$log['qrcode_'] = $qrcode_;
-    				if($qrcode_['result']['id']){
-                        if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_text']){
+    				$log['boleto_'] = $boleto_;
+    				if($boleto_['result']['id']){
+                        if(!$saved_boleto['qrcode'] || !$saved_boleto['qrcode_text']){
     						$save_qrc = gip_save_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
-    								'charge_id'=>$qrcode_['result']['id'],
+    								'charge_id'=>$boleto_['result']['id'],
     								'amount'=>$invoice_int_amount,
-    								'duedate'=>(string)$qrcode_['result']['due_date'],
-    								'qrcode'=>$qrcode_['result']['pix']['qrcode'],
-    								'qrcode_text'=>$qrcode_['result']['pix']['qrcode_text'],
+    								'duedate'=>(string)$boleto_['result']['due_date'],
+    								'qrcode'=>$boleto_['result']['pix']['qrcode'],
+    								'qrcode_text'=>$boleto_['result']['pix']['qrcode_text'],
     								'api_mode'=>$params_api['api_mode'],
     							]
     						);
@@ -1382,15 +1458,15 @@ if(!function_exists('gofasiugupix_link')){
     							$error .= $save_qrc;
     						}
     					}
-    					if($saved_qrcode['qrcode']){
+    					if($saved_boleto['qrcode']){
     						$update_qrc = gip_update_qrc(
     							[
     								'invoice_id'=>$params['invoiceid'],
-    								'charge_id'=>$qrcode_['result']['id'],
+    								'charge_id'=>$boleto_['result']['id'],
     								'amount'=>$invoice_int_amount,
-    								'duedate'=>(string)$qrcode_['result']['due_date'],
-    								'qrcode'=>$qrcode_['result']['pix']['qrcode'],
-    								'qrcode_text'=>$qrcode_['result']['pix']['qrcode_text'],
+    								'duedate'=>(string)$boleto_['result']['due_date'],
+    								'qrcode'=>$boleto_['result']['pix']['qrcode'],
+    								'qrcode_text'=>$boleto_['result']['pix']['qrcode_text'],
     								'api_mode'=>$params_api['api_mode'],
     							]
     						);
@@ -1400,9 +1476,9 @@ if(!function_exists('gofasiugupix_link')){
     						}
     					}
     					$result .= $params['message'];
-						$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$qrcode_['result']['pix']['qrcode'].'">';
-    					//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$qrcode_['result']['pix']['qrcode'].'">Visualizar o Pix</a>';
-    					$result .= '<input value="'.$qrcode_['result']['pix']['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+						$result .= '<img style="width: 200px;border: 1px solid #ccc;" src="'.$boleto_['result']['pix']['qrcode'].'">';
+    					//$result .= '<a target="_blank" class="btn btn-default" style=" float: left;font-size: 14px;" href="'.$boleto_['result']['pix']['qrcode'].'">Visualizar o Pix</a>';
+    					$result .= '<input value="'.$boleto_['result']['pix']['qrcode_text'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
     					$result .= '<button style="position: relative;font-size: 14px; display: inline-block;width: 200px;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Pix Copia e Cola</button>';
     				}
     			}
@@ -1418,7 +1494,7 @@ if(!function_exists('gofasiugupix_link')){
     			}
     			if(!$error and $params['redirecttobillet'] and stripos($_SERVER['REQUEST_URI'], 'viewinvoice') ){
     				header_remove();
-    				header("Location: ".$qrcode_['result']['pix']['qrcode'],true,303);
+    				header("Location: ".$boleto_['result']['pix']['qrcode'],true,303);
     				exit;
     			}
     			else {
@@ -1432,59 +1508,3 @@ if(!function_exists('gofasiugupix_link')){
     	//}
     }
 }
-if($_REQUEST['invoice_id']){
-	require_once __DIR__ . '/../../../init.php';
-	require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
-	require_once __DIR__ . '/../../../includes/invoicefunctions.php';
-	$params = getGatewayVariables('gofasiugupix');
-	$params_api = gip_api_connect();
-	$invoice = localAPI('getinvoice',array('invoiceid'=> $_REQUEST['invoice_id']),(int)gip_setup_admin()['id']);
-	if( $invoice['invoiceid']){
-		$qrcode = gip_get_local_qrc($_REQUEST['invoice_id']);	
-		$charge = gip_charge_verify($qrcode['charge_id']);
-		if(($charge['result']['status'] === 'paid') and $invoice['status'] !== 'Paid' and (float)$invoice['total'] === (float)($charge['result']['total_cents']/100)){
-			$add_trans = gip_add_trans($invoice['userid'],$_REQUEST['invoice_id'], (float)number_format( $charge['result']['total_paid_cents']/100,  2, '.', ''), (float)number_format($charge['result']['taxes_paid_cents']/100,  2, '.', ''), 'gip-'.$params_api['api_mode'].'-'.$qrcode['charge_id'], 'Pix pago - confirmação ao acessar a fatura');			
-		}
-		if($charge['result']['status']){
-			echo $charge['result']['status'];
-		}
-	}
-	if($params['log']){
-		logModuleCall('gofasiugupix','callback',array('request'=>$_REQUEST),'', array( 'charge'=>$charge ) );
-	}
-}
-if($_REQUEST['activate']){
-	require_once __DIR__.'/../../../init.php';
-	require_once __DIR__.'/../../../includes/gatewayfunctions.php';
-	require_once __DIR__.'/../../../includes/invoicefunctions.php';
-	foreach( Capsule::table('tblpaymentgateways')->where('gateway','=','gofasiugupix')->get() as $gateway_ ){
-		$setting[$gateway_->setting] = $gateway_->value;
-		$gateway = $gateway_->gateway;
-	}
-	if((string)$gateway === (string)'gofasiugupix' and $setting['name']){
-		logActivity('Falha ao ativar o módulo Gofas iugu Pix: módulo já se encontra ativado.',0);
-		header_remove();
-    	header("Location: ".gip_whmcs_url('admin_url').'/configgateways.php?manage=gofasiugupix#m_gofasiugupix',true,303);
-    	exit;
-	}
-	else{
-		if((string)$gateway === (string)'gofasiugupix'){
-			Capsule::table('tblpaymentgateways')->where('gateway','=','gofasiugupix')->delete();
-		}
-		try {
-			Capsule::table('tblpaymentgateways')->insert(['gateway'=>'gofasiugupix','setting'=>'name','value'=>'Gofas iugu - Pix','order' => 0]);
-			logActivity('Módulo Gofas iugu Pix ativado com sucesso!',0);
-			header_remove();
-    		header("Location: ".gip_whmcs_url('admin_url').'/configgateways.php?activated=gofasiugupix#m_gofasiugupix',true,303);
-    		exit;
-		}
-		catch (\Exception $e){
-			logActivity('Falha ao ativar o módulo Gofas iugu Pix: '.$e->getMessage(),0);
-			echo $e->getMessage();
-			exit;
-		}
-	}
-}
-add_hook("AfterCronJob",1,"gip_check_status_updates");
-add_hook("EmailPreSend",1,"gip_qrcode_mergetags");
-add_hook("EmailTplMergeFields",1,"gip_qrcode_mergetags_fields");

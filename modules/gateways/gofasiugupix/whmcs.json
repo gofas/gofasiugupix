@@ -5,11 +5,11 @@
   "license": "proprietary",
   "category": "payments",
   "description": {
-    "name": "Gofas iugu Pix",
-    "tagline": "Cobranças via Pix com QR Code diretamente nas faturas do WHMCS."
+    "name": "Gofas iugu pix",
+    "tagline": "Recebimento via PIX / QR code diretamente nas faturas do WHMCS."
   },
   "logo": {
-    "filename": "/assets/img/logo.png"
+    "filename": "whmcs.png"
   },
   "support": {
     "docs_url": "https:\/\/gofas.net\/gip"
