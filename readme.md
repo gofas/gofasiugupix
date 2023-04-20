@@ -1,13 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/mauriciogofas/gofasgalaxpaypix/tree/HEAD)
+## [Unreleased](https://github.com/mauriciogofas/gofasiugupix/tree/HEAD)
 
-[Full Changelog](https://github.com/mauriciogofas/gofasgalaxpaypix/compare/22f70ece917d53b96ec99e06232e825ed0eab04e...HEAD)
+[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/65dbb516264ca46a652e45a7721649ec6a5a3259...HEAD)
 
-**Closed issues:**
+**Implemented enhancements:**
 
-- compatibilidade php8+ [\#4](https://github.com/mauriciogofas/gofasgalaxpaypix/issues/4)
-- Corrigido erro pela busca por arquivos desnecessários [\#3](https://github.com/mauriciogofas/gofasgalaxpaypix/issues/3)
+- Ativação do módulo ao acessar modules/gateways/gofasiugupix.php?activate=true \(contorna Gateway Module Error: Configuration function \( \_config \) not found in: modules/gateways/gofasiugupix.php & Error: Gateway Module "gofasiugupix" Not Activated\)\) [\#1](https://github.com/mauriciogofas/gofasiugupix/issues/1)
 
 
 
