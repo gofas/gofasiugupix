@@ -8,8 +8,8 @@
  * @version		1.0.0
  */
 if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)>=(int)81){
-	require __DIR__.'/gofasiugupix/index.php';
+	require_once __DIR__.'/gofasiugupix/index.php';
 }
 if((int)substr(preg_replace('/[^\da-z]/i','',phpversion()),0,2)<=(int)74){
-    require __DIR__.'/gofasiugupix/indexd.php';
+    require_once __DIR__.'/gofasiugupix/indexd.php';
 }
