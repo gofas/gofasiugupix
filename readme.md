@@ -6,7 +6,7 @@
 
 **Implemented enhancements:**
 
-- Ativação do módulo ao acessar modules/gateways/gofasiugupix.php?activate=true \(contorna Gateway Module Error: Configuration function \( \_config \) not found in: modules/gateways/gofasiugupix.php & Error: Gateway Module "gofasiugupix" Not Activated\)\) [\#1](https://github.com/mauriciogofas/gofasiugupix/issues/1)
+- Lançamento 🎉 [\#2](https://github.com/mauriciogofas/gofasiugupix/issues/2)
 
 
 
