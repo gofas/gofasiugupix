@@ -6,7 +6,7 @@
   "category": "payments",
   "description": {
     "name": "Gofas iugu pix",
-    "tagline": "Recebimento via PIX / QR code diretamente nas faturas do WHMCS."
+    "tagline": "Recebimento via QR code diretamente nas faturas do WHMCS."
   },
   "logo": {
     "filename": "whmcs.png"
