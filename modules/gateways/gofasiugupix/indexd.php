@@ -195,7 +195,6 @@ if(!function_exists('gofasiugupix_config')){
     		$module_version	= '1.0.0';
     		$module_page	= '14950';
             $verify_install = gip_verify_install();
-			$enable_pix = gip_enable_pix();
     		$whmcs_url = gip_whmcs_url();
     		$check_updates = gip_verify_module_updates($module_page,$whmcs_url['admin_url'],$module_version);
     		if($_REQUEST['resetversion'] === 'gofasiugupix'){
@@ -370,6 +369,9 @@ if(!function_exists('gofasiugupix_config')){
 }
 if(!function_exists('gofasiugupix_link')){
     function gofasiugupix_link($params){
+		if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
+			$enable_pix = gip_enable_pix();
+		}
     	//if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
     		$log['params'] = $params;
     		if($params['amount'] >= $params['minimunamount']){	
