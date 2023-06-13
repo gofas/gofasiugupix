@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/mauriciogofas/gofasiugupix/tree/HEAD)
+## [v1.0.0](https://github.com/mauriciogofas/gofasiugupix/tree/v1.0.0) (13/06/2023)
 
-[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/65dbb516264ca46a652e45a7721649ec6a5a3259...HEAD)
+[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/65dbb516264ca46a652e45a7721649ec6a5a3259...v1.0.0)
 
 **Implemented enhancements:**
 
