@@ -1151,15 +1151,14 @@ if(!function_exists('gip_qrcode_mergetags_fields')){
 }
 if(!function_exists('gip_qrcode_mergetags')){
     function gip_qrcode_mergetags($vars){
-		//require_once $root_dir.'/modules/gateways/gofasiugupix/includes/functions.php';
-        $params = getGatewayVariables('gofasiugupix');
-	    if(
+		if(
 			$vars['messagename'] === 'Invoice Created' ||
 			$vars['messagename'] === 'Invoice Payment Reminder' ||
 			$vars['messagename'] === 'First Invoice Overdue Notice' ||
 			$vars['messagename'] === 'Second Invoice Overdue Notice' ||
 			$vars['messagename'] === 'Third Invoice Overdue Notice'
 		){
+			$params = getGatewayVariables('gofasiugupix');
 			$gip_merge_fields	= array();
 			$invoice			= localAPI( 'GetInvoice', array('invoiceid' => $vars['relid']), (int)gip_setup_admin()['id']);
 			if( $invoice['total'] > '0.00' and $invoice['paymentmethod'] === 'gofasiugupix'){
