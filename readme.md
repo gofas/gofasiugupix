@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/mauriciogofas/gofasiugupix/tree/HEAD)
+
+[Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/v1.0.0...HEAD)
+
+**Fixed bugs:**
+
+- Adaptação para php 7 \(evita erro ao resetar a senha\) [\#3](https://github.com/mauriciogofas/gofasiugupix/issues/3)
+
 ## [v1.0.0](https://github.com/mauriciogofas/gofasiugupix/tree/v1.0.0) (13/06/2023)
 
 [Full Changelog](https://github.com/mauriciogofas/gofasiugupix/compare/65dbb516264ca46a652e45a7721649ec6a5a3259...v1.0.0)
