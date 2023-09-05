@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=14950
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.0.0
+ * @version		1.0.1
  */
 use WHMCS\Database\Capsule;
 use WHMCS\Aplication;
@@ -192,7 +192,7 @@ if(!function_exists('gofasiugupix_config')){
     function gofasiugupix_config(){
 		$gip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.0.0';
+    		$module_version	= '1.0.1';
     		$module_page	= '14950';
             $verify_install = gip_verify_install();
     		$whmcs_url = gip_whmcs_url();
@@ -1151,15 +1151,14 @@ if(!function_exists('gip_qrcode_mergetags_fields')){
 }
 if(!function_exists('gip_qrcode_mergetags')){
     function gip_qrcode_mergetags($vars){
-		//require_once $root_dir.'/modules/gateways/gofasiugupix/includes/functions.php';
-        $params = getGatewayVariables('gofasiugupix');
-	    if(
+		if(
 			$vars['messagename'] === 'Invoice Created' ||
 			$vars['messagename'] === 'Invoice Payment Reminder' ||
 			$vars['messagename'] === 'First Invoice Overdue Notice' ||
 			$vars['messagename'] === 'Second Invoice Overdue Notice' ||
 			$vars['messagename'] === 'Third Invoice Overdue Notice'
 		){
+			$params = getGatewayVariables('gofasiugupix');
 			$gip_merge_fields	= array();
 			$invoice			= localAPI( 'GetInvoice', array('invoiceid' => $vars['relid']), (int)gip_setup_admin()['id']);
 			if( $invoice['total'] > '0.00' and $invoice['paymentmethod'] === 'gofasiugupix'){
