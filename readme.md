@@ -6,6 +6,7 @@
 
 **Fixed bugs:**
 
+- Corrige valor quando crédito é adicionado à fatura [\#4](https://github.com/mauriciogofas/gofasiugupix/issues/4)
 - Adaptação para php 7 \(evita erro ao resetar a senha\) [\#3](https://github.com/mauriciogofas/gofasiugupix/issues/3)
 
 ## [v1.0.0](https://github.com/mauriciogofas/gofasiugupix/tree/v1.0.0) (13/06/2023)
