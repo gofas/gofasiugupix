@@ -107,7 +107,7 @@ if(!function_exists('gip_enable_pix')){
 				}
 			}
 			else{
-				logActivity('Gofas iugu - Pix | Erro ao ativar pagamento via PIX na conta iugu: '.$result_code.': '.$result,0);
+				logActivity('Gofas iugu Pix | Erro ao ativar pagamento via PIX na conta iugu: '.$result_code.': '.$result,0);
 			}
 			}
 		}
@@ -213,7 +213,7 @@ if(!function_exists('gofasiugupix_config')){
     			return [
     				'FriendlyName' => [
     					'Type' => 'System',
-    					'Value' => 'Gofas iugu - Pix',
+    					'Value' => 'Gofas iugu Pix',
     				],
     				'separator_1' => [
     					'Description' => '
@@ -222,7 +222,7 @@ if(!function_exists('gofasiugupix_config')){
     						'.gip_decrypt($check_updates['check']).'
     						</div>
     						<div>
-    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
+    							<h4 style="padding-top: 5px; color: red;">Módulo Gofas iugu Pix para WHMCS v'.$module_version.' | requer WHMCS versão 8.6.1 ou superior</h4>
     							'.$check_updates['message'].'
     							<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=14950#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
 								'.gip_file_exists_check('/includes/hooks/gofasiugupix.php').'
@@ -244,7 +244,7 @@ if(!function_exists('gofasiugupix_config')){
     		$renderize = array(
     			'FriendlyName' => array(
     				'Type' => 'System',
-    				'Value' => 'Gofas iugu - Pix',
+    				'Value' => 'Gofas iugu Pix',
     			),
     			'separator_1' => array(
     				'Description' => '
@@ -253,7 +253,7 @@ if(!function_exists('gofasiugupix_config')){
     					'.gip_decrypt($check_updates['check']).'
     					</div>
     					<div>
-    						<h4 style="padding-top: 5px;">Módulo Gofas iugu - Pix para WHMCS v'.$module_version.'</h4>
+    						<h4 style="padding-top: 5px;">Módulo Gofas iugu Pix para WHMCS v'.$module_version.'</h4>
     						'.$check_updates['message'].'
     						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=14950#configuration">Documentação do módulo</a> | <a style="text-decoration:underline;" target="_blank" href="https://dev.iugu.com/reference/metadados/">Documentação da API iugu</a></p>
 							'.gip_file_exists_check('/includes/hooks/gofasiugupix.php').'
@@ -447,28 +447,14 @@ if(!function_exists('gofasiugupix_link')){
     				}
     			}
     			if(!$saved_qrcode['qrcode'] || !$saved_qrcode['qrcode_text'] || $saved_qrcode_amount !== $invoice_int_amount || $billet_duedate_int < $now_int){
-    				$line_items = array();
-    				foreach( $GetInvoiceResults['items']['item'] as $Value){
-    					if($Value['amount'] < (float)'0.00'){
-							$line_items[]	= [
-								'description'=>substr( $Value['description'],  0, 80),
-								'quantity'=>1,
-								'price_cents'=> '-'.(int)preg_replace("/[^0-9]/", "", $Value['amount']),
-							];
-						}
-						else{
-							$line_items[]	= [
-    							'description'=>substr( $Value['description'],  0, 80),
-    							'quantity'=>1,
-    							'price_cents'=> (int)preg_replace("/[^0-9]/", "", $Value['amount']),
-    						];
-						}
-    				}
 					$postfields = [
     					'email'=>$customer['email'],
 						'due_date'=> $datediff['duedate'],
-						//'expires_in'=>$params['diasparavencimento'],
-						'items'=>$line_items,
+						'items' => [[
+							'description'=>substr( $params['description'],  0, 80),
+							'quantity'=>1,
+							'price_cents'=> (int)preg_replace("/[^0-9]/", "", $params['amount']),
+						]],
 						'payable_with'=>['pix'],
 						'notification_url'=>gip_whmcs_url('whmcs_url').'/modules/gateways/gofasiugupix.php',
 						'payer' => [
@@ -491,8 +477,10 @@ if(!function_exists('gofasiugupix_link')){
     					//$error .= $qrcode_['result_code'].': ';
     					if(is_array($qrcode_['result']['errors'])){
 							foreach($qrcode_['result']['errors'] as $key=>$value){
-    							$error .= $key.' '.implode(", ",$value);
-    						}
+								if(is_array($value)){
+	    							$error .= $key.' '.implode(", ",$value);
+    							}
+							}
 						}
     				}
     				$log['postfields_json'] = json_encode($postfields['charge']);
