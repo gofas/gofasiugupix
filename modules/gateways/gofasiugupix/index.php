@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=14950
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14299
- * @version		1.0.1
+ * @version		1.1.0
  */
 use WHMCS\Database\Capsule;
 use WHMCS\Aplication;
@@ -192,7 +192,7 @@ if(!function_exists('gofasiugupix_config')){
     function gofasiugupix_config(){
 		$gip_config = [];
     	if(stripos($_SERVER['REQUEST_URI'], 'configgateways')!==false){
-    		$module_version	= '1.0.1';
+    		$module_version	= '1.1.0';
     		$module_page	= '14950';
             $verify_install = gip_verify_install();
     		$whmcs_url = gip_whmcs_url();
@@ -880,7 +880,7 @@ if(!function_exists('gip_get_local_qrc')){
 }
 if(!function_exists('gip_update_stats')){
 	function gip_module_version(){
-		return '1.0.1';
+		return '1.1.0';
 	}
 	function gip_update_stats(){
 		$params = getGatewayVariables('gofasiugupix');
