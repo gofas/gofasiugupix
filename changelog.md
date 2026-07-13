@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- readme: captura versionada, badges e sumario - [#9](https://github.com/gofas/gofasiugupix/issues/9)
 - readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasiugupix/issues/8)
 
 [Comparar versões](https://github.com/gofas/gofasiugupix/compare/v1.1.0...HEAD)
