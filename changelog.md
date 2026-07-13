@@ -1,5 +1,14 @@
 # Changelog
 
+## [Próxima atualização](https://github.com/gofas/gofasiugupix/tree/HEAD)
+
+
+**Melhorias:**
+
+- readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasiugupix/issues/8)
+
+[Comparar versões](https://github.com/gofas/gofasiugupix/compare/v1.1.0...HEAD)
+
 ## [v1.1.0 - 12/07/2026](https://github.com/gofas/gofasiugupix/releases/tag/v1.1.0)
 
 
