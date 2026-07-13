@@ -2,7 +2,7 @@
 
 [![versão](https://img.shields.io/github/v/release/gofas/gofasiugupix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasiugupix/releases/latest)
 [![downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgofas.net%2Fwp-json%2Fgofas%2Fv1%2Fbadge%2Fgofasiugupix&style=flat-square)](https://github.com/gofas/gofasiugupix/releases/latest)
-[![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
+[![abrir issue](https://img.shields.io/badge/suporte-abrir%20issue-ff8700?style=flat-square)](https://gofas.net/?p=14299/#new-post)
 
 Gera cobranças Pix via API da iugu, com código QR exibido diretamente na fatura do WHMCS e baixa automática ao confirmar o pagamento. Desenvolvido pela Gofas Software, é 100% gratuito e de código aberto.
 
@@ -70,7 +70,7 @@ Gera cobranças Pix via API da iugu, com código QR exibido diretamente na fatur
 
 ## Suporte
 
-Fórum de suporte gratuito: https://gofas.net/foruns/
+[Abrir issue](https://gofas.net/?p=14299/#new-post) no fórum do módulo.
 
 ## Licença
 
