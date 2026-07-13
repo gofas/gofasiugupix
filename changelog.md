@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- readme: contador do site, captura sem aviso de hook e secao de licenca - [#10](https://github.com/gofas/gofasiugupix/issues/10)
 - readme: captura versionada, badges e sumario - [#9](https://github.com/gofas/gofasiugupix/issues/9)
 - readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasiugupix/issues/8)
 
